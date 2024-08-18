@@ -42,8 +42,8 @@ function authenticateToken(req, res, next) {
 // User registration
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
-    if(!username || !password){
-        return res.status(400).json({"error":"userame and password are required."});
+    if (!username || !password) {
+        return res.status(400).json({ "error": "userame and password are required." });
     }
     // Hash the password
     const hashedPassword = bcrypt.hashSync(password, 10);
@@ -56,15 +56,15 @@ app.post('/register', (req, res) => {
             }
             throw err;
         }
-        return res.status(200).json({"message":"User registered successfully"});
+        return res.status(200).json({ "message": "User registered successfully" });
     });
 });
 
 // User login
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    if(!username || !password){
-        return res.status(400).json({"error":"userame and password are required."});
+    if (!username || !password) {
+        return res.status(400).json({ "error": "userame and password are required." });
     }
     const query = 'SELECT * FROM users WHERE username = ?';
     db.query(query, [username], (err, results) => {
@@ -85,10 +85,7 @@ app.post('/login', (req, res) => {
 app.post('/sendMessage', authenticateToken, (req, res) => {
     const { receiverId, message } = req.body;
     const senderId = req.user.id;
-    console.log("req.body: "+req.body);
-    console.log("receiverId: "+receiverId);
-    console.log("message: "+message);
-    console.log("senderId: "+senderId);
+    
     const query = 'INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)';
 
     db.query(query, [senderId, receiverId, message], (err, result) => {
@@ -96,7 +93,7 @@ app.post('/sendMessage', authenticateToken, (req, res) => {
         const notificationQuery = 'INSERT INTO notifications (user_id, message_id) VALUES (?, ?)';
         db.query(notificationQuery, [receiverId, result.insertId], (err, result) => {
             if (err) throw err;
-            res.status(201).json({"message":'Message sent and notification created'});
+            res.status(201).json({ "message": 'Message sent and notification created' });
         });
     });
 });
@@ -104,7 +101,11 @@ app.post('/sendMessage', authenticateToken, (req, res) => {
 // Get messages for a user
 app.get('/messages', authenticateToken, (req, res) => {
     const userId = req.user.id;
-    const query = 'SELECT * FROM messages WHERE receiver_id = ? ORDER BY timestamp DESC';
+    const query = `
+        select 
+            m.message,u.username,m.timestamp from messages m inner join users u 
+        where m.sender_id=u.id and m.receiver_id=? order by timestamp desc;
+    `;
 
     db.query(query, [userId], (err, results) => {
         if (err) throw err;

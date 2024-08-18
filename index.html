@@ -144,11 +144,12 @@
                     messagesDiv.innerHTML = '';
                     messages.forEach(msg => {
                         const messageElement = document.createElement('div');
-                        messageElement.textContent = `${msg.timestamp}: ${msg.message}`;
+                        messageElement.textContent = `${msg.message} : ${msg.username} : ${msg.timestamp}`;
                         messagesDiv.appendChild(messageElement);
                     });
                 });
         }
+
 
         function startSSE() {
             const eventSource = new EventSource(`http://127.0.0.1:3000/notifications?token=${token}`);
