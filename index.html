@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaging App</title>
+    <style>
+        #notifications {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #ff9800;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Messaging App</h1>
+
+    <div id="auth">
+        <h2>Register</h2>
+        <form id="registerForm">
+            <input type="text" id="registerUsername" placeholder="Username" required><br>
+            <input type="password" id="registerPassword" placeholder="Password" required><br>
+            <button type="submit">Register</button>
+        </form>
+
+        <h2>Login</h2>
+        <form id="loginForm">
+            <input type="text" id="loginUsername" placeholder="Username" required><br>
+            <input type="password" id="loginPassword" placeholder="Password" required><br>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <div id="messaging" style="display:none;">
+        <h2>Send Message</h2>
+        <form id="sendMessageForm">
+            <input type="text" id="receiverUserId" placeholder="Enter Receiver User ID" required>
+            <textarea id="messageText" placeholder="Enter your message"></textarea><br>
+            <button type="submit" id="sendButton">Send Message</button>
+        </form>
+
+
+        <h2>Messages</h2>
+        <div id="messages"></div>
+
+        <div id="notifications">New message received!</div>
+        <button id="logoutButton">Logout</button>
+    </div>
+
+    <script>
+        let token = '';
+
+        document.getElementById('registerForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+
+            fetch('http://127.0.0.1:3000/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            }).then(response => response.text())
+                .then(result => alert(result));
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            fetch('http://127.0.0.1:3000/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.token) {
+                        token = data.token;
+                        document.getElementById('auth').style.display = 'none';
+                        document.getElementById('messaging').style.display = 'block';
+                        loadMessages();
+                        startSSE();
+                    } else {
+                        alert('Login failed');
+                    }
+                });
+        });
+
+        document.getElementById('sendMessageForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const receiverUserId = document.getElementById('receiverUserId').value;
+            const messageContent = document.getElementById('messageText').value;
+
+            fetch('http://localhost:3000/sendMessage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    receiverId: receiverUserId,
+                    message: messageContent
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Message sent:', data);
+                    loadMessages(); // Optional: Reload messages after sending
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+
+
+
+        document.getElementById('logoutButton').addEventListener('click', function () {
+            token = '';
+            document.getElementById('auth').style.display = 'block';
+            document.getElementById('messaging').style.display = 'none';
+        });
+
+        function loadMessages() {
+            fetch('http://127.0.0.1:3000/messages', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+                .then(response => response.json())
+                .then(messages => {
+                    const messagesDiv = document.getElementById('messages');
+                    messagesDiv.innerHTML = '';
+                    messages.forEach(msg => {
+                        const messageElement = document.createElement('div');
+                        messageElement.textContent = `${msg.timestamp}: ${msg.message}`;
+                        messagesDiv.appendChild(messageElement);
+                    });
+                });
+        }
+
+        function startSSE() {
+            const eventSource = new EventSource(`http://127.0.0.1:3000/notifications?token=${token}`);
+
+            eventSource.onmessage = function (event) {
+                // Show the notification
+                const notificationsDiv = document.getElementById('notifications');
+                notificationsDiv.style.display = 'block';
+                setTimeout(() => {
+                    notificationsDiv.style.display = 'none';
+                }, 3000);
+
+                // Update the messages
+                loadMessages();
+            };
+
+            eventSource.onerror = function (event) {
+                console.error('SSE connection error', event);
+                eventSource.close();
+            };
+        }
+
+
+
+    </script>
+</body>
+
+</html>
