@@ -144,10 +144,68 @@
                     messagesDiv.innerHTML = '';
                     messages.forEach(msg => {
                         const messageElement = document.createElement('div');
-                        messageElement.textContent = `${msg.message} : ${msg.username} : ${msg.timestamp}`;
+                        messageElement.className = 'message';
+                        messageElement.innerHTML = `
+                    <p><strong>${msg.timestamp}:</strong>${msg.message}:${msg.username}</p>
+                    <button class="replyButton" data-message-id="${msg.id}" data-sender-id="${msg.sender_id}">Reply</button>
+                `;
                         messagesDiv.appendChild(messageElement);
                     });
-                });
+
+                    // Add event listeners for reply buttons
+                    document.querySelectorAll('.replyButton').forEach(button => {
+                        button.addEventListener('click', function () {
+                            const messageId = this.getAttribute('data-message-id');
+                            const senderId = this.getAttribute('data-sender-id');
+                            openReplyForm(messageId, senderId);
+                        });
+                    });
+                })
+                .catch(error => console.error('Error loading messages:', error));
+        }
+
+        function openReplyForm(messageId, senderId) {
+            const replyForm = document.createElement('div');
+            replyForm.innerHTML = `
+        <h3>Reply</h3>
+        <textarea id="replyMessageText" placeholder="Enter your reply"></textarea><br>
+        <button id="sendReplyButton">Send Reply</button>
+        <button id="cancelReplyButton">Cancel</button>
+    `;
+            document.body.appendChild(replyForm);
+
+            // Handle send reply
+            document.getElementById('sendReplyButton').addEventListener('click', function () {
+                const replyMessage = document.getElementById('replyMessageText').value;
+                sendReply(messageId, senderId, replyMessage);
+                document.body.removeChild(replyForm);
+            });
+
+            // Handle cancel
+            document.getElementById('cancelReplyButton').addEventListener('click', function () {
+                document.body.removeChild(replyForm);
+            });
+        }
+
+        function sendReply(originalMessageId, receiverId, replyMessage) {
+            fetch('http://127.0.0.1:3000/sendMessage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    receiverId: receiverId,
+                    message: replyMessage,
+                    replyTo: originalMessageId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Reply sent:', data);
+                    loadMessages(); // Reload messages to show the new reply
+                })
+                .catch(error => console.error('Error sending reply:', error));
         }
 
 

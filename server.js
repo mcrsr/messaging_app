@@ -83,27 +83,27 @@ app.post('/login', (req, res) => {
 
 // Send a message
 app.post('/sendMessage', authenticateToken, (req, res) => {
-    const { receiverId, message } = req.body;
+    const { receiverId, message, replyTo } = req.body;
     const senderId = req.user.id;
-    
-    const query = 'INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)';
 
-    db.query(query, [senderId, receiverId, message], (err, result) => {
+    const query = 'INSERT INTO messages (sender_id, receiver_id, message, reply_to) VALUES (?, ?, ?, ?)';
+    db.query(query, [senderId, receiverId, message, replyTo || null], (err, result) => {
         if (err) throw err;
         const notificationQuery = 'INSERT INTO notifications (user_id, message_id) VALUES (?, ?)';
-        db.query(notificationQuery, [receiverId, result.insertId], (err, result) => {
+        db.query(notificationQuery, [receiverId, result.insertId], (err) => {
             if (err) throw err;
-            res.status(201).json({ "message": 'Message sent and notification created' });
+            res.status(201).json({"message": 'Message sent and notification created'});
         });
     });
 });
+
 
 // Get messages for a user
 app.get('/messages', authenticateToken, (req, res) => {
     const userId = req.user.id;
     const query = `
         select 
-            m.message,u.username,m.timestamp from messages m inner join users u 
+            m.id,m.sender_id,m.message,u.username,m.timestamp from messages m inner join users u 
         where m.sender_id=u.id and m.receiver_id=? order by timestamp desc;
     `;
 
