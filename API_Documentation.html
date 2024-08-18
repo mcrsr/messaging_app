@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaging App Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            border-bottom: 3px solid #ff9800;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        nav {
+            background: #444;
+            padding: 10px;
+            text-align: center;
+        }
+
+        nav a {
+            color: #fff;
+            padding: 14px 20px;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-weight: bold;
+            display: inline-block;
+            margin: 0 5px;
+        }
+
+        nav a:hover {
+            background: #ff9800;
+            color: #fff;
+            border-radius: 5px;
+        }
+
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+
+        .content-section {
+            background: #fff;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #ff9800;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+        }
+
+        pre {
+            background: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            border: 1px solid #ddd;
+        }
+
+        .code-block {
+            background: #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            color: #ff9800;
+        }
+
+        .contact {
+            background: #444;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .contact a {
+            color: #ff9800;
+            text-decoration: none;
+        }
+
+        .contact a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Messaging App Documentation</h1>
+    </header>
+
+    <nav>
+        <a href="#overview">Overview</a>
+        <a href="#features">Features</a>
+        <a href="#setup">Setup Instructions</a>
+        <a href="#api">API Endpoints</a>
+        <a href="#frontend">Frontend Functionality</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+        <a href="#contact">Contact</a>
+    </nav>
+
+    <div class="container">
+        <section id="overview" class="content-section">
+            <h2>Overview</h2>
+            <p>The Messaging App is a simple application that allows users to register, log in, send messages, and receive real-time notifications. It includes both a backend server built with Express.js and a frontend interface in HTML and JavaScript.</p>
+        </section>
+
+        <section id="features" class="content-section">
+            <h2>Features</h2>
+            <ul>
+                <li>User Registration: Allows new users to sign up.</li>
+                <li>User Login: Allows existing users to log in.</li>
+                <li>Send Messages: Users can send messages to each other.</li>
+                <li>View Messages: Users can view their received messages.</li>
+                <li>Real-Time Notifications: Users receive notifications when they receive new messages.</li>
+            </ul>
+        </section>
+
+        <section id="setup" class="content-section">
+            <h2>Setup Instructions</h2>
+            <h3>Backend</h3>
+            <ol>
+                <li><strong>Install Dependencies</strong>
+                    <pre><code>npm install express mysql2 body-parser bcryptjs jsonwebtoken cors</code></pre>
+                </li>
+                <li><strong>Create a MySQL Database</strong>
+                    <pre><code>CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    message TEXT NOT NULL,
+    reply_to INT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(id),
+    FOREIGN KEY (receiver_id) REFERENCES users(id)
+);
+
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    message_id INT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (message_id) REFERENCES messages(id)
+);</code></pre>
+                </li>
+                <li><strong>Run the Server</strong>
+                    <pre><code>node app.js</code></pre>
+                </li>
+            </ol>
+
+            <h3>Frontend</h3>
+            <ol>
+                <li><strong>Create an HTML File</strong> - Save the provided HTML code as <code>index.html</code>.</li>
+                <li><strong>Open the HTML File</strong> - Open <code>index.html</code> in a web browser to use the app.</li>
+            </ol>
+        </section>
+
+        <section id="api" class="content-section">
+            <h2>API Endpoints</h2>
+
+            <h3>1. Register a New User</h3>
+            <p><strong>URL:</strong> <code>/register</code></p>
+            <p><strong>Method:</strong> POST</p>
+            <p><strong>Body:</strong></p>
+            <pre><code>{
+    "username": "your_username",
+    "password": "your_password"
+}</code></pre>
+            <p><strong>Response:</strong></p>
+            <ul>
+                <li>200 OK on success.</li>
+                <li>400 Bad Request if required fields are missing.</li>
+                <li>409 Conflict if username already exists.</li>
+            </ul>
+
+            <h3>2. Log In</h3>
+            <p><strong>URL:</strong> <code>/login</code></p>
+            <p><strong>Method:</strong> POST</p>
+            <p><strong>Body:</strong></p>
+            <pre><code>{
+    "username": "your_username",
+    "password": "your_password"
+}</code></pre>
+            <p><strong>Response:</strong></p>
+            <ul>
+                <li>200 OK with a JWT token on success.</li>
+                <li>401 Unauthorized if user is not found.</li>
+                <li>403 Forbidden if password is incorrect.</li>
+            </ul>
+
+            <h3>3. Send a Message</h3>
+            <p><strong>URL:</strong> <code>/sendMessage</code></p>
+            <p><strong>Method:</strong> POST</p>
+            <p><strong>Headers:</strong></p>
+            <pre><code>Authorization: Bearer YOUR_JWT_TOKEN</code></pre>
+            <p><strong>Body:</strong></p>
+            <pre><code>{
+    "receiverId": "receiver_user_id",
+    "message": "your_message",
+    "replyTo": "optional_reply_to_message_id"
+}</code></pre>
+            <p><strong>Response:</strong></p>
+            <ul>
+                <li>201 Created on success.</li>
+                <li>401 Unauthorized if not authenticated.</li>
+            </ul>
+
+            <h3>4. Get Messages</h3>
+            <p><strong>URL:</strong> <code>/messages</code></p>
+            <p><strong>Method:</strong> GET</p>
+            <p><strong>Headers:</strong></p>
+            <pre><code>Authorization: Bearer YOUR_JWT_TOKEN</code></pre>
+            <p><strong>Response:</strong></p>
+            <ul>
+                <li>200 OK with a list of messages.</li>
+            </ul>
+
+            <h3>5. Notifications (SSE)</h3>
+            <p><strong>URL:</strong> <code>/notifications</code></p>
+            <p><strong>Method:</strong> GET</p>
+            <p><strong>Query Parameters:</strong></p>
+            <pre><code>token=YOUR_JWT_TOKEN</code></pre>
+            <p><strong>Response:</strong></p>
+            <ul>
+                <li>Streams notifications about new messages.</li>
+            </ul>
+        </section>
+
+        <section id="frontend" class="content-section">
+            <h2>Frontend Functionality</h2>
+            <ul>
+                <li><strong>Registration and Login:</strong> Fill out the forms and submit to register or log in.</li>
+                <li><strong>Send Message:</strong> Enter the receiver's user ID and message, then click "Send Message".</li>
+                <li><strong>View Messages:</strong> View your received messages and reply to them.</li>
+                <li><strong>Notifications:</strong> Real-time notifications will appear when you receive new messages.</li>
+            </ul>
+        </section>
+
+        <section id="troubleshooting" class="content-section">
+            <h2>Troubleshooting</h2>
+            <ul>
+                <li><strong>Issues with Authentication:</strong> Ensure that you include the JWT token in the <code>Authorization</code> header for protected routes.</li>
+                <li><strong>No Messages Displayed:</strong> Check that you have sent messages and that the database connection is properly configured.</li>
+            </ul>
+        </section>
+    </div>
+
+    <div class="contact" id="contact">
+        <p>For further assistance, contact the developer at <a href="mailto:developer@example.com">developer@example.com</a>.</p>
+    </div>
+</body>
+
+</html>
